@@ -1,6 +1,11 @@
 from flask import Flask, request, jsonify, render_template
 # from flask_cors import CORS
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 app = Flask(__name__)
 # CORS(app)
@@ -126,8 +131,16 @@ def recommend_routes(prompt, max_results=3):
 
 @app.route('/')
 def index():
-    """Serve the main application page."""
-    return render_template('index.html')
+    firebase_config = {
+        "apiKey": os.getenv("FIREBASE_API_KEY"),
+        "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+        "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+        "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+        "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+        "appId": os.getenv("FIREBASE_APP_ID"),
+    }
+    return render_template('index.html', firebase_config=firebase_config)
+
 
 
 @app.route('/api/recommend', methods=['POST'])

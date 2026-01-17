@@ -14,6 +14,13 @@
 </head>
 
 <body class="bg-green-50 min-h-screen p-5">
+    <!-- Top-right sign-in button (managed by auth.js) -->
+    <button id="signinBtn" class="fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition z-50">
+        Sign in
+    </button>
+
+    <!-- Auth Modal (managed by auth.js) -->
+
     <div class="max-w-4xl mx-auto text-center">
         <header class="mb-8 max-w-xl mx-auto">
             <h1 class="text-3xl md:text-4xl font-extrabold drop-shadow-lg">
@@ -67,9 +74,24 @@
 
         <div id="resultsSection" class="hidden"></div>
     </div>
-    <!-- Load Leaflet JS (required before our map script) -->
+
+    <!-- Load Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-    <!-- Load site JS from Flask static folder -->
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Inject Firebase config from Flask -->
+    <script>
+        window.FIREBASE_CONFIG = {{ firebase_config | tojson }};
+    </script>
+
+    <!-- Your app logic -->
     <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+    <!-- Auth module (handles sign-in/sign-up with Firebase) -->
+    <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
 </body>
+</html>

@@ -1,9 +1,26 @@
+// ---------- Firebase Initialization ----------
+if (!window.FIREBASE_CONFIG) {
+    console.error("Firebase config missing");
+} else {
+    firebase.initializeApp(window.FIREBASE_CONFIG);
+}
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUserProfile = null;
+
 function fillExample(text) {
     document.getElementById('promptInput').value = text;
 }
 
 async function getRecommendations() {
-    const prompt = document.getElementById('promptInput').value.trim();
+    let prompt = document.getElementById('promptInput').value.trim();
+
+    if (currentUserProfile?.favoriteLocation) {
+        prompt += ` Please consider passing near ${currentUserProfile.favoriteLocation}.`;
+    }
+
     const resultsSection = document.getElementById('resultsSection');
     const submitBtn = document.getElementById('submitBtn');
 
@@ -244,3 +261,61 @@ function displayRouteOnMap(routeCoordinates) {
     }
 })();
 
+
+// ---------- Firebase auth state ----------
+auth.onAuthStateChanged(async (user) => {
+    const statusEl = document.getElementById('authStatus');
+
+    if (!user) {
+        currentUserProfile = null;
+        if (statusEl) statusEl.textContent = 'Not signed in';
+        return;
+    }
+
+    try {
+        const snap = await db.collection('users').doc(user.uid).get();
+        currentUserProfile = snap.data();
+
+        if (statusEl && currentUserProfile?.nickname) {
+            statusEl.textContent = `Signed in as ${currentUserProfile.nickname}`;
+        }
+    } catch (err) {
+        console.error('Failed to load user profile', err);
+    }
+});
+
+async function signUp() {
+    const nickname = document.getElementById('nicknameInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    const favoriteLocation = document.getElementById('favoriteLocationInput').value.trim();
+
+    if (!nickname || !email || !password) {
+        alert('Please fill all required fields.');
+        return;
+    }
+
+    try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+
+        await db.collection('users').doc(cred.user.uid).set({
+            nickname,
+            email,
+            favoriteLocation,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+async function signIn() {
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+    } catch (err) {
+        alert(err.message);
+    }
+}
