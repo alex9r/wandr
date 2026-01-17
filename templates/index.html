@@ -301,7 +301,8 @@
             const submitBtn = document.getElementById('submitBtn');
 
             if (!prompt) {
-                alert('Please enter a description of the walk you want!');
+                resultsSection.style.display = 'block';
+                resultsSection.innerHTML = '<div class="error">⚠️ Please enter a description of the walk you want!</div>';
                 return;
             }
 

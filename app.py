@@ -5,6 +5,9 @@ import re
 app = Flask(__name__)
 CORS(app)
 
+# Configuration
+ROUTE_BUFFER_MINUTES = 5  # Buffer time for getting to/from the route
+
 # Mock data: Walking routes with parks and green spaces
 ROUTES = [
     {
@@ -72,12 +75,12 @@ def parse_time_constraint(prompt):
     prompt_lower = prompt.lower()
     
     # Pattern for "X minutes"
-    minutes_match = re.search(r'(\d+)\s*(?:minute|min|mins)', prompt_lower)
+    minutes_match = re.search(r'(\d+)\s*(?:minutes?|mins?)', prompt_lower)
     if minutes_match:
         return int(minutes_match.group(1))
     
     # Pattern for "X hours"
-    hours_match = re.search(r'(\d+)\s*(?:hour|hr|hrs)', prompt_lower)
+    hours_match = re.search(r'(\d+)\s*(?:hours?|hrs?)', prompt_lower)
     if hours_match:
         return int(hours_match.group(1)) * 60
     
@@ -105,8 +108,9 @@ def recommend_routes(prompt, max_results=3):
     
     # Filter routes by time constraint if specified
     if time_constraint:
-        # Add 5 minutes buffer for getting to/from the route
-        available_routes = [r for r in ROUTES if r['duration_minutes'] <= time_constraint - 5]
+        # Add buffer for getting to/from the route (only if time allows)
+        max_duration = max(0, time_constraint - ROUTE_BUFFER_MINUTES)
+        available_routes = [r for r in ROUTES if r['duration_minutes'] <= max_duration]
     else:
         available_routes = ROUTES
     
