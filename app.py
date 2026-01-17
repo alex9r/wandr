@@ -219,10 +219,11 @@ def generate_route():
         ]
         
         # Use OSRM to get the route
+        print("Requesting OSRM route...")
         coords_str = ';'.join([f"{lon},{lat}" for lat, lon in waypoints])
-        osrm_url = f"https://router.project-osrm.org/route/v1/foot/{coords_str}?overview=full&geometries=geojson"
-        
-        response = requests.get(osrm_url)
+        osrm_url = f"http://router.project-osrm.org/route/v1/foot/{coords_str}?overview=full&geometries=geojson"
+        print(f"OSRM URL: {osrm_url}")
+        response = requests.get(osrm_url, timeout=10)
         
         if response.status_code != 200:
             # Fallback: return simple waypoints if OSRM fails
