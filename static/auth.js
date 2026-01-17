@@ -243,6 +243,11 @@
             }
         });
 
+        // ---------- Close profile dropdown ----------
+        closeProfileDropdown.addEventListener('click', () => {
+            profileDropdown.classList.add('hidden');
+        });
+
         // ---------- Sign out ----------
         signoutBtn.addEventListener('click', async () => {
             await auth.signOut();
