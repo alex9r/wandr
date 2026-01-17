@@ -77,12 +77,16 @@ def parse_time_constraint(prompt):
     # Pattern for "X minutes"
     minutes_match = re.search(r'(\d+)\s*(?:minutes?|mins?)', prompt_lower)
     if minutes_match:
-        return int(minutes_match.group(1))
+        minutes = int(minutes_match.group(1))
+        # Cap at 24 hours (1440 minutes) for sanity
+        return min(minutes, 1440)
     
     # Pattern for "X hours"
     hours_match = re.search(r'(\d+)\s*(?:hours?|hrs?)', prompt_lower)
     if hours_match:
-        return int(hours_match.group(1)) * 60
+        hours = int(hours_match.group(1))
+        # Cap at 24 hours for sanity
+        return min(hours * 60, 1440)
     
     # Pattern for "half an hour", "half hour"
     if re.search(r'half\s*(?:an\s*)?hour', prompt_lower):
@@ -165,4 +169,6 @@ def get_all_routes():
 
 
 if __name__ == '__main__':
+    # NOTE: For production, set debug=False and configure host appropriately
+    # Debug mode is enabled here for development purposes only
     app.run(debug=True, host='0.0.0.0', port=5000)

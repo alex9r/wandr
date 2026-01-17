@@ -339,10 +339,20 @@
         function displayResults(data) {
             const resultsSection = document.getElementById('resultsSection');
             
+            // Helper function to escape HTML
+            function escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+            
             let html = '<div class="results-header">';
             html += '<h2>🎯 Recommended Routes</h2>';
             if (data.time_constraint_minutes) {
-                html += `<p class="constraint-info">⏱️ Filtered for ${data.time_constraint_minutes} minutes available</p>`;
+                html += `<p class="constraint-info">⏱️ Filtered for ${escapeHtml(String(data.time_constraint_minutes))} minutes available</p>`;
             }
             html += '</div>';
 
@@ -359,22 +369,22 @@
                     html += `
                         <div class="route-card">
                             <div class="route-header">
-                                <div class="route-name">${route.name}</div>
-                                <div class="greenery-badge">🌿 ${route.greenery_score}% Green</div>
+                                <div class="route-name">${escapeHtml(route.name)}</div>
+                                <div class="greenery-badge">🌿 ${escapeHtml(String(route.greenery_score))}% Green</div>
                             </div>
                             <div class="route-meta">
                                 <div class="meta-item">
                                     <span class="meta-icon">⏱️</span>
-                                    <span>${route.duration_minutes} minutes</span>
+                                    <span>${escapeHtml(String(route.duration_minutes))} minutes</span>
                                 </div>
                                 <div class="meta-item">
                                     <span class="meta-icon">📏</span>
-                                    <span>${route.distance_km} km</span>
+                                    <span>${escapeHtml(String(route.distance_km))} km</span>
                                 </div>
                             </div>
-                            <p class="route-description">${route.description}</p>
+                            <p class="route-description">${escapeHtml(route.description)}</p>
                             <div class="highlights">
-                                ${route.highlights.map(h => `<span class="highlight-tag">✨ ${h}</span>`).join('')}
+                                ${route.highlights.map(h => `<span class="highlight-tag">✨ ${escapeHtml(h)}</span>`).join('')}
                             </div>
                         </div>
                     `;
