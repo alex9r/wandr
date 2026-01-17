@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wandr - Walking Route Recommendations</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        /* Map container style */
+        #map { height: 400px; border-radius: 1rem; margin-top: 2rem; }
+    </style>
 </head>
 
 <body class="bg-green-50 min-h-screen p-5">
@@ -51,7 +57,14 @@
             </button>
         </div>
 
+        <!-- Map container -->
+        <div id="map" class="bg-white rounded-2xl shadow-2xl"></div>
+
         <div id="resultsSection" class="hidden"></div>
     </div>
-    <script src="script.js" defer></script>
+    <!-- Load Leaflet JS (required before our map script) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <!-- Load site JS from Flask static folder -->
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
 </body>

@@ -107,3 +107,57 @@ document.getElementById('promptInput').addEventListener('keypress', function(e) 
         getRecommendations();
     }
 });
+
+// ---------- Leaflet map initialization (defensive) ----------
+(function initMap() {
+    // Only run if there's a map container on the page
+    const mapEl = document.getElementById('map');
+    if (!mapEl) {
+        console.info('No #map element found — skipping map initialization.');
+        return;
+    }
+
+    // Wait for Leaflet to be available
+    if (typeof window.L === 'undefined') {
+        console.error('Leaflet (L) is not available. Make sure leaflet.js is loaded before script.js');
+        return;
+    }
+
+    try {
+        const fallbackCenter = [40.7128, -74.0060]; // NYC
+        const fallbackZoom = 12;
+
+        // Initialize map with a default center so tiles start loading immediately
+        const map = L.map('map', { center: fallbackCenter, zoom: fallbackZoom });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Force a size invalidation shortly after render (useful if container was hidden or resized)
+        setTimeout(() => { try { map.invalidateSize(); } catch (e) { /* ignore */ } }, 200);
+
+        // Try to center on the user's location, with graceful fallback
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                console.log('Map: geolocation success', lat, lon);
+                map.setView([lat, lon], 14);
+                L.marker([lat, lon]).addTo(map).bindPopup('You are here').openPopup();
+                setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 200);
+            }, err => {
+                console.warn('Map: geolocation failed or denied, using fallback. Error:', err && err.message);
+                map.setView(fallbackCenter, fallbackZoom);
+            }, { timeout: 5000 });
+        } else {
+            console.warn('Map: geolocation not supported, using fallback center.');
+            map.setView(fallbackCenter, fallbackZoom);
+        }
+
+    } catch (err) {
+        console.error('Map initialization error:', err);
+    }
+})();
+
