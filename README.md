@@ -96,3 +96,17 @@ The current implementation uses mock route data. Future enhancements could inclu
 - User preferences and saved routes
 - Community-contributed routes and ratings
 - Weather-based recommendations
+
+## Production Deployment
+
+**Security Note:** The app currently runs in debug mode for development. For production:
+
+1. **Disable debug mode** - Edit `app.py` and set `debug=False`
+2. **Use a production WSGI server** - Deploy with gunicorn or uWSGI:
+   ```bash
+   pip install gunicorn
+   gunicorn -w 4 -b 0.0.0.0:5000 app:app
+   ```
+3. **Configure proper host binding** - Restrict access as needed
+4. **Use HTTPS** - Set up SSL/TLS certificates
+5. **Set environment variables** - Configure `FLASK_ENV=production`

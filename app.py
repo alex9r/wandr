@@ -169,6 +169,9 @@ def get_all_routes():
 
 
 if __name__ == '__main__':
-    # NOTE: For production, set debug=False and configure host appropriately
-    # Debug mode is enabled here for development purposes only
+    # WARNING: Debug mode is enabled for development only
+    # For production deployment:
+    # 1. Set debug=False to prevent arbitrary code execution via debugger
+    # 2. Configure host appropriately (not 0.0.0.0)
+    # 3. Use a production WSGI server (e.g., gunicorn, uWSGI)
     app.run(debug=True, host='0.0.0.0', port=5000)
