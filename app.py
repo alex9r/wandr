@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
+# from flask_cors import CORS
 import re
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
 
 # Configuration
 ROUTE_BUFFER_MINUTES = 5  # Buffer time for getting to/from the route
