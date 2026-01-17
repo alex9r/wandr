@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wandr - Walking Route Recommendations</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚶 Wandr</h1>
+            <p class="tagline">Your personal walking route companion</p>
+        </header>
+
+        <div class="input-section">
+            <label class="input-label">What kind of walk are you looking for?</label>
+            <textarea 
+                id="promptInput" 
+                class="prompt-input" 
+                placeholder="Tell us about your walk... e.g., 'I have 30 minutes for my lunch break'"
+            ></textarea>
+            
+            <div class="examples">
+                <strong>Try these examples:</strong>
+                <div class="example-prompt" onclick="fillExample('I have 30 minutes for my lunch break')">
+                    💼 I have 30 minutes for my lunch break
+                </div>
+                <div class="example-prompt" onclick="fillExample('I want a quick 15 minute walk through nature')">
+                    🌳 I want a quick 15 minute walk through nature
+                </div>
+                <div class="example-prompt" onclick="fillExample('I have 45 minutes and want a peaceful walk')">
+                    🧘 I have 45 minutes and want a peaceful walk
+                </div>
+            </div>
+
+            <button id="submitBtn" class="submit-btn" onclick="getRecommendations()">
+                Find My Walk
+            </button>
+        </div>
+
+        <div id="resultsSection" class="results-section"></div>
+    </div>
+    <script src="js/script.js" defer></script>
+</body>
+</html>
