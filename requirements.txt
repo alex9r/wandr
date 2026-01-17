@@ -2,6 +2,7 @@ blinker==1.9.0
 click==8.1.8
 Flask==3.0.0
 Flask-Cors==4.0.0
+<<<<<<< HEAD
 importlib_metadata==8.7.1
 itsdangerous==2.2.0
 Jinja2==3.1.6
@@ -9,3 +10,6 @@ MarkupSafe==3.0.3
 python-dotenv==1.2.1
 Werkzeug==3.1.5
 zipp==3.23.0
+=======
+requests==2.31.0anthropic==0.25.0
+>>>>>>> b9ea108 (Extract the route length from the user's prompt)
