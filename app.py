@@ -168,6 +168,86 @@ def get_all_routes():
     return jsonify({'routes': ROUTES})
 
 
+@app.route('/api/generate-route', methods=['POST'])
+def generate_route():
+    """
+    Generate a circular walking route around user's location using OSRM.
+    Expects JSON with 'latitude', 'longitude', and optional 'distance_km'.
+    """
+    data = request.get_json()
+    
+    if not data or 'latitude' not in data or 'longitude' not in data:
+        return jsonify({'error': 'Missing latitude or longitude'}), 400
+    
+    lat = data['latitude']
+    lon = data['longitude']
+    distance_km = data.get('distance_km', 2)
+    
+    try:
+        import requests
+        import math
+        
+        # Create a circular route by generating points around the user's location
+        # Using OSRM to snap to roads and calculate the actual walking path
+        
+        # Calculate waypoints for a roughly circular route
+        # We'll create 4 waypoints: north, east, south, west
+        
+        # Approximate distance in degrees (1 degree ≈ 111 km)
+        degrees_offset = distance_km / 111 / 2
+        
+        waypoints = [
+            (lat, lon),  # Start at user location
+            (lat + degrees_offset, lon),  # North
+            (lat, lon + degrees_offset),  # East
+            (lat - degrees_offset, lon),  # South
+            (lat, lon - degrees_offset),  # West
+            (lat, lon)  # Return to start
+        ]
+        
+        # Use OSRM to get the route
+        coords_str = ';'.join([f"{lon},{lat}" for lat, lon in waypoints])
+        osrm_url = f"https://router.project-osrm.org/route/v1/foot/{coords_str}?overview=full&geometries=geojson"
+        
+        response = requests.get(osrm_url)
+        
+        if response.status_code != 200:
+            # Fallback: return simple waypoints if OSRM fails
+            route = [{'lat': lat, 'lng': lon} for lat, lon in waypoints]
+            return jsonify({'route': route})
+        
+        osrm_data = response.json()
+        
+        if 'routes' not in osrm_data or not osrm_data['routes']:
+            # Fallback to waypoints
+            route = [{'lat': lat, 'lng': lon} for lat, lon in waypoints]
+            return jsonify({'route': route})
+        
+        # Extract coordinates from the OSRM response
+        route_geom = osrm_data['routes'][0]['geometry']
+        
+        # Convert GeoJSON coordinates to our format
+        route = [{'lat': coord[1], 'lng': coord[0]} for coord in route_geom['coordinates']]
+        
+        return jsonify({'route': route})
+        
+    except Exception as e:
+        print(f"Error generating route: {e}")
+        # Return a simple fallback route
+        import math
+        degrees_offset = distance_km / 111 / 2
+        waypoints = [
+            (lat, lon),
+            (lat + degrees_offset, lon),
+            (lat, lon + degrees_offset),
+            (lat - degrees_offset, lon),
+            (lat, lon - degrees_offset),
+            (lat, lon)
+        ]
+        route = [{'lat': lat, 'lng': lon} for lat, lon in waypoints]
+        return jsonify({'route': route})
+
+
 if __name__ == '__main__':
     # WARNING: Debug mode is enabled for development only
     # For production deployment:

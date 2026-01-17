@@ -101,12 +101,94 @@ function displayResults(data) {
     resultsSection.innerHTML = html;
 }
 
-// Allow Enter key to submit
-document.getElementById('promptInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && e.ctrlKey) {
-        getRecommendations();
+// Global map and route layer variables
+let globalMap = null;
+let globalUserLocation = null;
+let routePolyline = null;
+let routeLayer = null;
+
+// Generate a circular walking route
+async function generateRoute() {
+    if (!globalUserLocation) {
+        alert('📍 Waiting for your location... please try again in a moment.');
+        return;
     }
-});
+
+    const btn = document.getElementById('generateRouteBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Generating Route...';
+
+    try {
+        // Generate a circular route (roughly 1-2 km) around the user's location
+        const response = await fetch('/api/generate-route', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: globalUserLocation.lat,
+                longitude: globalUserLocation.lng,
+                distance_km: 2 // 2 km route
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate route');
+        }
+
+        const data = await response.json();
+        displayRouteOnMap(data.route);
+    } catch (error) {
+        alert('❌ Failed to generate route. Please try again.');
+        console.error('Route generation error:', error);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🗺️ Generate Route';
+    }
+}
+
+// Display route on the map
+function displayRouteOnMap(routeCoordinates) {
+    if (!globalMap) return;
+
+    // Remove existing route if any
+    if (routePolyline) {
+        globalMap.removeLayer(routePolyline);
+    }
+    if (routeLayer) {
+        globalMap.removeLayer(routeLayer);
+    }
+
+    // Convert route coordinates to Leaflet format
+    const latlngs = routeCoordinates.map(coord => [coord.lat, coord.lng]);
+
+    // Create polyline for the route
+    routePolyline = L.polyline(latlngs, {
+        color: '#2563eb',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '5, 10'
+    }).addTo(globalMap);
+
+    // Create feature group for route elements
+    routeLayer = L.featureGroup().addTo(globalMap);
+
+    // Add start marker (user location)
+    L.circleMarker(latlngs[0], {
+        radius: 8,
+        fillColor: '#10b981',
+        color: '#059669',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.8
+    }).addTo(routeLayer).bindPopup('Start/End Point');
+
+    // Fit map to route bounds
+    const bounds = L.latLngBounds(latlngs);
+    globalMap.fitBounds(bounds, { padding: [50, 50] });
+
+    console.log('Route displayed with', latlngs.length, 'points');
+}
 
 // ---------- Leaflet map initialization (defensive) ----------
 (function initMap() {
@@ -128,15 +210,15 @@ document.getElementById('promptInput').addEventListener('keypress', function(e) 
         const fallbackZoom = 12;
 
         // Initialize map with a default center so tiles start loading immediately
-        const map = L.map('map', { center: fallbackCenter, zoom: fallbackZoom });
+        globalMap = L.map('map', { center: fallbackCenter, zoom: fallbackZoom });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-        }).addTo(map);
+        }).addTo(globalMap);
 
         // Force a size invalidation shortly after render (useful if container was hidden or resized)
-        setTimeout(() => { try { map.invalidateSize(); } catch (e) { /* ignore */ } }, 200);
+        setTimeout(() => { try { globalMap.invalidateSize(); } catch (e) { /* ignore */ } }, 200);
 
         // Try to center on the user's location, with graceful fallback
         if (navigator.geolocation) {
@@ -144,16 +226,17 @@ document.getElementById('promptInput').addEventListener('keypress', function(e) 
                 const lat = pos.coords.latitude;
                 const lon = pos.coords.longitude;
                 console.log('Map: geolocation success', lat, lon);
-                map.setView([lat, lon], 14);
-                L.marker([lat, lon]).addTo(map).bindPopup('You are here').openPopup();
-                setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 200);
+                globalUserLocation = { lat, lng: lon };
+                globalMap.setView([lat, lon], 14);
+                L.marker([lat, lon]).addTo(globalMap).bindPopup('📍 You are here').openPopup();
+                setTimeout(() => { try { globalMap.invalidateSize(); } catch (e) {} }, 200);
             }, err => {
                 console.warn('Map: geolocation failed or denied, using fallback. Error:', err && err.message);
-                map.setView(fallbackCenter, fallbackZoom);
+                globalMap.setView(fallbackCenter, fallbackZoom);
             }, { timeout: 5000 });
         } else {
             console.warn('Map: geolocation not supported, using fallback center.');
-            map.setView(fallbackCenter, fallbackZoom);
+            globalMap.setView(fallbackCenter, fallbackZoom);
         }
 
     } catch (err) {
