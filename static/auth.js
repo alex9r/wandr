@@ -1,4 +1,3 @@
-// Lightweight auth modal + Firebase init with separate Sign In / Sign Up tabs
 (function() {
     if (!window.FIREBASE_CONFIG) {
         console.info('No Firebase config provided; auth.js will stay inactive.');
@@ -20,7 +19,7 @@
         modal.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden';
         modal.innerHTML = `
             <div class="bg-white rounded-lg p-6 w-96">
-                <h3 class="text-xl font-semibold mb-4">Wandr Auth</h3>
+                <h3 class="text-xl font-semibold mb-4">Sign-in to Save a Favourite Location!</h3>
                 
                 <!-- Tabs -->
                 <div class="flex gap-2 mb-4 border-b">
@@ -224,7 +223,7 @@
                 if (!btn) {
                     btn = document.createElement('button');
                     btn.id = 'profileBtn';
-                    btn.className = 'fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 transition z-50';
+                    btn.className = 'fixed top-5 right-5 bg-green-100 text-green-900 px-2 py-2 rounded shadow border border-green-800 hover:bg-green-50 transition z-50';
                     btn.textContent = '👤 Profile';
                     btn.addEventListener('click', () => profileDropdown.classList.toggle('hidden'));
                     document.body.appendChild(btn);
