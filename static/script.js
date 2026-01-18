@@ -131,12 +131,19 @@ async function generateRoute() {
         return;
     }
 
-    const btn = document.getElementById('generateRouteBtn');
+    const prompt = document.getElementById('promptInput').value.trim();
+    
+    if (!prompt) {
+        alert('⚠️ Please enter a description of the walk you want!');
+        return;
+    }
+
+    const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = '🔄 Generating Route...';
 
     try {
-        // Generate a circular route (roughly 1-2 km) around the user's location
+        // Generate a circular route based on prompt (if provided)
         const response = await fetch('/api/generate-route', {
             method: 'POST',
             headers: {
@@ -145,7 +152,7 @@ async function generateRoute() {
             body: JSON.stringify({
                 latitude: globalUserLocation.lat,
                 longitude: globalUserLocation.lng,
-                distance_km: 2 // 2 km route
+                prompt: prompt // Pass the prompt for length extraction
             })
         });
 
@@ -160,7 +167,7 @@ async function generateRoute() {
         console.error('Route generation error:', error);
     } finally {
         btn.disabled = false;
-        btn.textContent = '🗺️ Generate Route';
+        btn.textContent = '🗺️ Find My Walk';
     }
 }
 

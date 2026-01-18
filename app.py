@@ -2,16 +2,17 @@ from flask import Flask, request, jsonify, render_template
 # from flask_cors import CORS
 import re
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 load_dotenv()
-
 
 app = Flask(__name__)
 # CORS(app)
 
 # Configuration
 ROUTE_BUFFER_MINUTES = 5  # Buffer time for getting to/from the route
+DEFAULT_ROUTE_DISTANCE_KM = 2  # Default route distance if none specified
 
 # Mock data: Walking routes with parks and green spaces
 ROUTES = [
@@ -108,6 +109,65 @@ def parse_time_constraint(prompt):
     return None
 
 
+def extract_route_length_from_prompt(prompt: str) -> Optional[float]:
+    """
+    Extract the desired route length/distance from the user's prompt.
+    Uses Claude LLM to understand user intent.
+    Returns distance in kilometers, or None if not specified (will use default).
+    Falls back to regex patterns if API is not available.
+    """
+    
+    # First, try regex patterns for explicit distance mentions
+    distance_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:km|kilometers?|k)', prompt.lower())
+    if distance_match:
+        return float(distance_match.group(1))
+    
+    # Try to use Claude API if available
+    api_key = os.getenv('ANTHROPIC_API_KEY')
+    if api_key:
+        try:
+            import anthropic
+            
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=100,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"""Extract the desired walking route distance from this prompt. 
+                        Return ONLY a single number representing kilometers, or "DEFAULT" if not specified.
+                        Examples: "2 hours" -> 3, "half hour" -> 1, "30 min" -> 1.5, "I want a long walk" -> DEFAULT
+                        
+                        Prompt: "{prompt}"
+                        
+                        Response:"""
+                    }
+                ]
+            )
+            
+            response_text = message.content[0].text.strip()
+            if response_text.upper() == "DEFAULT":
+                return None
+            try:
+                return float(response_text)
+            except ValueError:
+                return None
+                
+        except Exception as e:
+            print(f"Claude API error (falling back to regex): {e}")
+            return None
+    
+    # Fallback: estimate from time constraint
+    time_constraint = parse_time_constraint(prompt)
+    if time_constraint:
+        # Rough estimate: 1 km per 15 minutes of walking
+        estimated_distance = time_constraint / 15
+        return min(estimated_distance, 15)  # Cap at 15 km
+    
+    return None
+
+
 def recommend_routes(prompt, max_results=3):
     """
     Recommend walking routes based on user prompt.
@@ -184,8 +244,10 @@ def get_all_routes():
 @app.route('/api/generate-route', methods=['POST'])
 def generate_route():
     """
-    Generate a circular walking route around user's location using OSRM.
-    Expects JSON with 'latitude', 'longitude', and optional 'distance_km'.
+    Generate a circular walking route around user's location.
+    Extracts route length from user's prompt.
+    Expects JSON with 'latitude', 'longitude', and optional 'prompt' and 'distance_km'.
+    If both prompt and distance_km are provided, distance_km takes precedence.
     """
     data = request.get_json()
     
@@ -194,7 +256,23 @@ def generate_route():
     
     lat = data['latitude']
     lon = data['longitude']
-    distance_km = data.get('distance_km', 2)
+    
+    # Determine route distance
+    distance_km = None
+    
+    # Priority 1: explicit distance_km parameter
+    if 'distance_km' in data and data['distance_km'] is not None:
+        distance_km = data['distance_km']
+    # Priority 2: extract from prompt
+    elif 'prompt' in data and data['prompt']:
+        distance_km = extract_route_length_from_prompt(data['prompt'])
+    
+    # Priority 3: use default
+    if distance_km is None:
+        distance_km = DEFAULT_ROUTE_DISTANCE_KM
+    
+    # Validate distance (cap at 20 km for safety)
+    distance_km = min(max(distance_km, 0.5), 20)
     
     try:
         import requests
