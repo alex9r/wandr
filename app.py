@@ -112,7 +112,7 @@ def parse_time_constraint(prompt):
 def extract_route_length_from_prompt(prompt: str) -> Optional[float]:
     """
     Extract the desired route length/distance from the user's prompt.
-    Uses Claude LLM to understand user intent.
+    Uses OpenAI LLM to understand user intent.
     Returns distance in kilometers, or None if not specified (will use default).
     Falls back to regex patterns if API is not available.
     """
@@ -122,15 +122,15 @@ def extract_route_length_from_prompt(prompt: str) -> Optional[float]:
     if distance_match:
         return float(distance_match.group(1))
     
-    # Try to use Claude API if available
-    api_key = os.getenv('ANTHROPIC_API_KEY')
+    # Try to use OpenAI API if available
+    api_key = os.getenv('OPENAI_API_KEY')
     if api_key:
         try:
-            import anthropic
+            from openai import OpenAI
             
-            client = anthropic.Anthropic(api_key=api_key)
-            message = client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+            client = OpenAI(api_key=api_key)
+            message = client.chat.completions.create(
+                model="gpt-4o-mini",
                 max_tokens=100,
                 messages=[
                     {
@@ -146,7 +146,7 @@ def extract_route_length_from_prompt(prompt: str) -> Optional[float]:
                 ]
             )
             
-            response_text = message.content[0].text.strip()
+            response_text = message.choices[0].message.content.strip()
             if response_text.upper() == "DEFAULT":
                 return None
             try:
@@ -155,7 +155,7 @@ def extract_route_length_from_prompt(prompt: str) -> Optional[float]:
                 return None
                 
         except Exception as e:
-            print(f"Claude API error (falling back to regex): {e}")
+            print(f"OpenAI API error (falling back to regex): {e}")
             return None
     
     # Fallback: estimate from time constraint
